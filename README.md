@@ -71,4 +71,4 @@ docker-compose up --build -d
 ---
 
 ## 📄 License
-MIT © 2026 Vamsi · Built for High-Growth Cloud Engineering Teams
+MIT © 2026 Vance K · Built for High-Growth Cloud Engineering Teams
