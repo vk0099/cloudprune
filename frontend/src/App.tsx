@@ -30,15 +30,23 @@ export const App: React.FC = () => {
   const [resources, setResources] = useState<CostResource[]>([]);
   const [anomalies, setAnomalies] = useState<CostAnomaly[]>([]);
 
+  const getApiBase = () => {
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/cloudprune')) {
+      return '/cloudprune/api';
+    }
+    return '/api';
+  };
+
   const fetchData = async () => {
     try {
       setLoading(true);
+      const apiBase = getApiBase();
       const [sumRes, trajRes, recRes, resRes, anomRes] = await Promise.all([
-        fetch('/api/overview').then(r => r.json()).catch(() => null),
-        fetch('/api/spend-trajectory').then(r => r.json()).catch(() => null),
-        fetch('/api/recommendations').then(r => r.json()).catch(() => null),
-        fetch('/api/resources').then(r => r.json()).catch(() => null),
-        fetch('/api/anomalies').then(r => r.json()).catch(() => null),
+        fetch(`${apiBase}/overview`).then(r => r.json()).catch(() => null),
+        fetch(`${apiBase}/spend-trajectory`).then(r => r.json()).catch(() => null),
+        fetch(`${apiBase}/recommendations`).then(r => r.json()).catch(() => null),
+        fetch(`${apiBase}/resources`).then(r => r.json()).catch(() => null),
+        fetch(`${apiBase}/anomalies`).then(r => r.json()).catch(() => null),
       ]);
 
       if (sumRes?.data) setSummary(sumRes.data);
@@ -59,7 +67,8 @@ export const App: React.FC = () => {
 
   const handleRemediate = async (id: string) => {
     try {
-      const res = await fetch(`/api/remediate/${id}`, { method: 'POST' });
+      const apiBase = getApiBase();
+      const res = await fetch(`${apiBase}/remediate/${id}`, { method: 'POST' });
       const data = await res.json();
       if (data.success) {
         setRecommendations(prev =>
@@ -92,7 +101,8 @@ export const App: React.FC = () => {
 
   const handleReset = async () => {
     try {
-      await fetch('/api/reset', { method: 'POST' });
+      const apiBase = getApiBase();
+      await fetch(`${apiBase}/reset`, { method: 'POST' });
       fetchData();
     } catch {
       fetchData();
