@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: cloudprune-backend
     ports:
-      - "4000:4000"
+      - "5000:4000"
     environment:
       - PORT=4000
       - NODE_ENV=production
@@ -21,7 +21,7 @@ services:
       dockerfile: Dockerfile
     container_name: cloudprune-frontend
     ports:
-      - "3001:80"
+      - "3005:80"
     depends_on:
       - backend
     restart: unless-stopped
