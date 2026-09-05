@@ -1,10 +1,22 @@
-import { CostResource, FinOpsRecommendation, CostAnomaly, DailySpendPoint, FinOpsOverviewSummary } from '../types/index.js';
+import {
+  CostResource,
+  FinOpsRecommendation,
+  CostAnomaly,
+  DailySpendPoint,
+  FinOpsOverviewSummary,
+  CloudProvider,
+  ProviderSpendSummary
+} from '../types/index.js';
 
 export class FinOpsEngine {
   private resources: CostResource[] = [
+    // ==========================================
+    // 1. AWS (Amazon Web Services) Resources
+    // ==========================================
     {
       id: 'i-09f1a238d8271',
       name: 'prod-api-worker-c5.4xlarge',
+      provider: 'AWS',
       service: 'EC2',
       region: 'us-east-1',
       monthlyCostUSD: 496.40,
@@ -16,6 +28,7 @@ export class FinOpsEngine {
     {
       id: 'rds-pg-analytics-db.m5.2xlarge',
       name: 'analytics-replica-staging',
+      provider: 'AWS',
       service: 'RDS',
       region: 'us-east-1',
       monthlyCostUSD: 712.00,
@@ -27,6 +40,7 @@ export class FinOpsEngine {
     {
       id: 'vol-0a87f1c4e92b516',
       name: 'unattached-app-log-backup',
+      provider: 'AWS',
       service: 'EBS',
       region: 'us-west-2',
       monthlyCostUSD: 180.00,
@@ -38,6 +52,7 @@ export class FinOpsEngine {
     {
       id: 'vol-0e3189d71c89012',
       name: 'core-database-storage-gp2',
+      provider: 'AWS',
       service: 'EBS',
       region: 'us-east-1',
       monthlyCostUSD: 320.00,
@@ -49,6 +64,7 @@ export class FinOpsEngine {
     {
       id: 's3-data-lake-raw-telemetry',
       name: 'raw-telemetry-dumps',
+      provider: 'AWS',
       service: 'S3',
       region: 'us-east-1',
       monthlyCostUSD: 640.00,
@@ -60,6 +76,7 @@ export class FinOpsEngine {
     {
       id: 'nat-0182749abcef1928',
       name: 'dev-vpc-nat-gateway',
+      provider: 'AWS',
       service: 'NAT_GATEWAY',
       region: 'us-east-1',
       monthlyCostUSD: 115.00,
@@ -71,6 +88,7 @@ export class FinOpsEngine {
     {
       id: 'eip-081729481723',
       name: 'dangling-static-ip-1',
+      provider: 'AWS',
       service: 'ELASTIC_IP',
       region: 'us-east-1',
       monthlyCostUSD: 36.50,
@@ -78,13 +96,147 @@ export class FinOpsEngine {
       utilizationPct: 0.0,
       status: 'UNATTACHED',
       details: 'Unassociated Elastic IP incurring AWS hourly idle penalty.'
+    },
+
+    // ==========================================
+    // 2. Oracle Cloud Infrastructure (OCI) Resources
+    // ==========================================
+    {
+      id: 'ocid1.instance.oc1.iad.abuwcljtsq...',
+      name: 'oci-ampere-a1-flex-app-cluster',
+      provider: 'OCI',
+      service: 'OCI_COMPUTE',
+      region: 'us-ashburn-1',
+      monthlyCostUSD: 345.60,
+      wastedCostUSD: 240.00,
+      utilizationPct: 12.5,
+      status: 'OVERPROVISIONED',
+      details: 'Configured with 8 OCPUs / 48GB RAM. Average utilization is under 15%. Downsize to 4 OCPUs / 24GB.'
+    },
+    {
+      id: 'ocid1.bootvolume.oc1.iad.abuwcljtvpu...',
+      name: 'oci-prod-boot-volume-120vpu',
+      provider: 'OCI',
+      service: 'OCI_BOOT_VOLUME',
+      region: 'us-ashburn-1',
+      monthlyCostUSD: 168.00,
+      wastedCostUSD: 126.00,
+      utilizationPct: 18.0,
+      status: 'OVERPROVISIONED',
+      details: 'Allocated Ultra High Performance (120 VPU) for web frontend. Tune down to Balanced (10 VPU).'
+    },
+    {
+      id: 'ocid1.autonomousdb.oc1.iad.abuwcljtatp...',
+      name: 'oci-staging-atp-datawarehouse',
+      provider: 'OCI',
+      service: 'OCI_AUTONOMOUS_DB',
+      region: 'us-ashburn-1',
+      monthlyCostUSD: 840.00,
+      wastedCostUSD: 840.00,
+      utilizationPct: 0.0,
+      status: 'IDLE',
+      details: 'Autonomous Transaction Processing database idle over weekends and off-hours. Enable Auto-Stop.'
+    },
+    {
+      id: 'ocid1.bucket.oc1.iad.archive-logs...',
+      name: 'oci-raw-audit-logs-bucket',
+      provider: 'OCI',
+      service: 'OCI_OBJECT_STORAGE',
+      region: 'us-ashburn-1',
+      monthlyCostUSD: 215.00,
+      wastedCostUSD: 172.00,
+      utilizationPct: 95.0,
+      status: 'OVERPROVISIONED',
+      details: '8.2 TB in Standard Tier untouched for 60+ days. Transition to OCI Archive Storage Tier ($0.0026/GB).'
+    },
+
+    // ==========================================
+    // 3. Google Cloud Platform (GCP) Resources
+    // ==========================================
+    {
+      id: 'gcp-n2-standard-16-worker-pool',
+      name: 'gcp-ml-inference-n2-standard-16',
+      provider: 'GCP',
+      service: 'GCP_COMPUTE',
+      region: 'us-central1-a',
+      monthlyCostUSD: 588.00,
+      wastedCostUSD: 410.00,
+      utilizationPct: 14.2,
+      status: 'OVERPROVISIONED',
+      details: 'Custom N2 instance over-allocated for baseline workload. Recommend switching to E2-standard-4 or Spot.'
+    },
+    {
+      id: 'gcp-sql-pg-analytics-dev',
+      name: 'gcp-cloudsql-postgres-dev',
+      provider: 'GCP',
+      service: 'GCP_CLOUD_SQL',
+      region: 'us-central1-b',
+      monthlyCostUSD: 290.00,
+      wastedCostUSD: 290.00,
+      utilizationPct: 0.0,
+      status: 'IDLE',
+      details: 'Cloud SQL instance in dev environment active 24/7 without weekend schedule or sleep mode.'
+    },
+    {
+      id: 'gcp-pd-ssd-unattached-disk-500g',
+      name: 'gcp-unattached-ssd-persistent-disk',
+      provider: 'GCP',
+      service: 'GCP_PERSISTENT_DISK',
+      region: 'us-central1-c',
+      monthlyCostUSD: 85.00,
+      wastedCostUSD: 85.00,
+      utilizationPct: 0.0,
+      status: 'UNATTACHED',
+      details: '500 GB SSD persistent disk orphaned after GKE node pool recreation.'
+    },
+
+    // ==========================================
+    // 4. Microsoft Azure Resources
+    // ==========================================
+    {
+      id: '/subscriptions/sub-1/resourceGroups/rg-prod/providers/Microsoft.Compute/virtualMachines/vm-app-d8s-v5',
+      name: 'azure-backend-vm-standard-d8s-v5',
+      provider: 'AZURE',
+      service: 'AZURE_VM',
+      region: 'eastus2',
+      monthlyCostUSD: 412.00,
+      wastedCostUSD: 288.00,
+      utilizationPct: 11.0,
+      status: 'OVERPROVISIONED',
+      details: 'Standard D8s v5 instance averaging 11% CPU. Downsize to D4s v5 or B-series burstable.'
+    },
+    {
+      id: '/subscriptions/sub-1/resourceGroups/rg-data/providers/Microsoft.Sql/servers/sql-staging/databases/db-test',
+      name: 'azure-sql-db-staging-gp-gen5-4',
+      provider: 'AZURE',
+      service: 'AZURE_SQL',
+      region: 'eastus2',
+      monthlyCostUSD: 365.00,
+      wastedCostUSD: 365.00,
+      utilizationPct: 0.8,
+      status: 'IDLE',
+      details: 'General Purpose 4-vCore Azure SQL database idle in staging subscription.'
+    },
+    {
+      id: '/subscriptions/sub-1/resourceGroups/rg-infra/providers/Microsoft.Compute/disks/disk-unattached-p30',
+      name: 'azure-unattached-premium-ssd-1tb',
+      provider: 'AZURE',
+      service: 'AZURE_MANAGED_DISK',
+      region: 'eastus2',
+      monthlyCostUSD: 135.00,
+      wastedCostUSD: 135.00,
+      utilizationPct: 0.0,
+      status: 'UNATTACHED',
+      details: '1 TB P30 Premium SSD disk detached and unreferenced for 28 days.'
     }
   ];
 
   private recommendations: FinOpsRecommendation[] = [
+    // AWS Recommendations
     {
       id: 'rec-001',
       title: 'Downsize Overprovisioned EC2 Instance (c5.4xlarge → c5.xlarge)',
+      provider: 'AWS',
       service: 'EC2',
       resourceId: 'i-09f1a238d8271',
       currentMonthlyCost: 496.40,
@@ -99,6 +251,7 @@ export class FinOpsEngine {
     {
       id: 'rec-002',
       title: 'Stop or Terminate Idle Staging RDS PostgreSQL Instance',
+      provider: 'AWS',
       service: 'RDS',
       resourceId: 'rds-pg-analytics-db.m5.2xlarge',
       currentMonthlyCost: 712.00,
@@ -113,6 +266,7 @@ export class FinOpsEngine {
     {
       id: 'rec-003',
       title: 'Delete Unattached 1.8 TB EBS Volume',
+      provider: 'AWS',
       service: 'EBS',
       resourceId: 'vol-0a87f1c4e92b516',
       currentMonthlyCost: 180.00,
@@ -120,13 +274,14 @@ export class FinOpsEngine {
       estimatedMonthlySavings: 180.00,
       impact: 'HIGH',
       difficulty: 'ONE_CLICK',
-      description: 'Volume was orphaned 42 days ago when an EC2 worker was terminated. Taking a final snapshot and deleting the volume stops continuous charges.',
+      description: 'Volume was orphaned 42 days ago when an EC2 worker was terminated. Taking a snapshot and deleting the volume stops continuous charges.',
       actionCommand: 'aws ec2 create-snapshot --volume-id vol-0a87f1c4e92b516 && aws ec2 delete-volume --volume-id vol-0a87f1c4e92b516',
       status: 'PENDING'
     },
     {
       id: 'rec-004',
       title: 'Migrate EBS Volumes from GP2 to GP3',
+      provider: 'AWS',
       service: 'EBS',
       resourceId: 'vol-0e3189d71c89012',
       currentMonthlyCost: 320.00,
@@ -141,6 +296,7 @@ export class FinOpsEngine {
     {
       id: 'rec-005',
       title: 'Enable S3 Glacier Instant Retrieval Lifecycle Rule',
+      provider: 'AWS',
       service: 'S3',
       resourceId: 's3-data-lake-raw-telemetry',
       currentMonthlyCost: 640.00,
@@ -155,6 +311,7 @@ export class FinOpsEngine {
     {
       id: 'rec-006',
       title: 'Decommission Idle Dev VPC NAT Gateway',
+      provider: 'AWS',
       service: 'NAT_GATEWAY',
       resourceId: 'nat-0182749abcef1928',
       currentMonthlyCost: 115.00,
@@ -169,6 +326,7 @@ export class FinOpsEngine {
     {
       id: 'rec-007',
       title: 'Release Unattached Elastic IP',
+      provider: 'AWS',
       service: 'ELASTIC_IP',
       resourceId: 'eip-081729481723',
       currentMonthlyCost: 36.50,
@@ -179,12 +337,169 @@ export class FinOpsEngine {
       description: 'AWS charges $0.005/hr for unused Elastic IPs. Releasing this allocated address eliminates ongoing waste.',
       actionCommand: 'aws ec2 release-address --allocation-id eip-081729481723',
       status: 'PENDING'
+    },
+
+    // OCI Recommendations
+    {
+      id: 'rec-008',
+      title: 'Rightsize OCI Ampere A1 Flex Shape (8 OCPUs/48GB → 4 OCPUs/24GB)',
+      provider: 'OCI',
+      service: 'OCI_COMPUTE',
+      resourceId: 'ocid1.instance.oc1.iad.abuwcljtsq...',
+      currentMonthlyCost: 345.60,
+      projectedMonthlyCost: 105.60,
+      estimatedMonthlySavings: 240.00,
+      impact: 'HIGH',
+      difficulty: 'ONE_CLICK',
+      description: 'Ampere A1 Flex instance is overprovisioned. Downsizing to 4 OCPUs / 24 GB RAM fits within Always-Free / baseline tier.',
+      actionCommand: 'oci compute instance update --instance-id ocid1.instance.oc1.iad.abuwcljtsq... --shape-config "{\\"ocpus\\":4,\\"memoryInGBs\\":24}"',
+      status: 'PENDING'
+    },
+    {
+      id: 'rec-009',
+      title: 'Tune OCI Boot Volume VPU Performance (120 VPU → 10 Balanced VPU)',
+      provider: 'OCI',
+      service: 'OCI_BOOT_VOLUME',
+      resourceId: 'ocid1.bootvolume.oc1.iad.abuwcljtvpu...',
+      currentMonthlyCost: 168.00,
+      projectedMonthlyCost: 42.00,
+      estimatedMonthlySavings: 126.00,
+      impact: 'HIGH',
+      difficulty: 'ONE_CLICK',
+      description: 'Volume is configured with 120 VPU Ultra High Performance for standard web workload. Changing to 10 VPU saves 75% without disk latency degradation.',
+      actionCommand: 'oci bv boot-volume update --boot-volume-id ocid1.bootvolume.oc1.iad.abuwcljtvpu... --vpu 10',
+      status: 'PENDING'
+    },
+    {
+      id: 'rec-010',
+      title: 'Enable Auto-Stop Schedule on Staging Autonomous DB (ATP)',
+      provider: 'OCI',
+      service: 'OCI_AUTONOMOUS_DB',
+      resourceId: 'ocid1.autonomousdb.oc1.iad.abuwcljtatp...',
+      currentMonthlyCost: 840.00,
+      projectedMonthlyCost: 0.00,
+      estimatedMonthlySavings: 840.00,
+      impact: 'CRITICAL',
+      difficulty: 'ONE_CLICK',
+      description: 'Autonomous Database in staging has received 0 queries. Halting compute recovers $840.00/mo while preserving database storage.',
+      actionCommand: 'oci db autonomous-database stop --autonomous-database-id ocid1.autonomousdb.oc1.iad.abuwcljtatp...',
+      status: 'PENDING'
+    },
+    {
+      id: 'rec-011',
+      title: 'Configure OCI Object Storage Lifecycle to Archive Tier',
+      provider: 'OCI',
+      service: 'OCI_OBJECT_STORAGE',
+      resourceId: 'ocid1.bucket.oc1.iad.archive-logs...',
+      currentMonthlyCost: 215.00,
+      projectedMonthlyCost: 43.00,
+      estimatedMonthlySavings: 172.00,
+      impact: 'MEDIUM',
+      difficulty: 'CONFIG_CHANGE',
+      description: 'Move 8.2 TB of historical audit logs to OCI Archive Tier ($0.0026/GB/month) via bucket lifecycle policy.',
+      actionCommand: 'oci os object-lifecycle-policy put --namespace-name prod --bucket-name oci-raw-audit-logs-bucket --items file://policy.json',
+      status: 'PENDING'
+    },
+
+    // GCP Recommendations
+    {
+      id: 'rec-012',
+      title: 'Downsize GCP Custom Compute Instance (n2-standard-16 → e2-standard-4)',
+      provider: 'GCP',
+      service: 'GCP_COMPUTE',
+      resourceId: 'gcp-n2-standard-16-worker-pool',
+      currentMonthlyCost: 588.00,
+      projectedMonthlyCost: 178.00,
+      estimatedMonthlySavings: 410.00,
+      impact: 'HIGH',
+      difficulty: 'ONE_CLICK',
+      description: 'Average CPU is 14.2%. Switching to cost-efficient E2 series saves $410.00/month with zero SLA disruption.',
+      actionCommand: 'gcloud compute instances set-machine-type gcp-ml-inference-n2-standard-16 --zone=us-central1-a --machine-type=e2-standard-4',
+      status: 'PENDING'
+    },
+    {
+      id: 'rec-013',
+      title: 'Schedule Automatic Weekend Shutdown on GCP Cloud SQL Dev DB',
+      provider: 'GCP',
+      service: 'GCP_CLOUD_SQL',
+      resourceId: 'gcp-sql-pg-analytics-dev',
+      currentMonthlyCost: 290.00,
+      projectedMonthlyCost: 0.00,
+      estimatedMonthlySavings: 290.00,
+      impact: 'CRITICAL',
+      difficulty: 'CONFIG_CHANGE',
+      description: 'Development database active continuously. Stopping non-production databases during off-peak saves 100% of compute.',
+      actionCommand: 'gcloud sql instances patch gcp-cloudsql-postgres-dev --activation-policy=NEVER',
+      status: 'PENDING'
+    },
+    {
+      id: 'rec-014',
+      title: 'Delete Orphaned 500GB SSD Persistent Disk in GCP',
+      provider: 'GCP',
+      service: 'GCP_PERSISTENT_DISK',
+      resourceId: 'gcp-pd-ssd-unattached-disk-500g',
+      currentMonthlyCost: 85.00,
+      projectedMonthlyCost: 0.00,
+      estimatedMonthlySavings: 85.00,
+      impact: 'MEDIUM',
+      difficulty: 'ONE_CLICK',
+      description: 'Unattached SSD persistent disk incurring daily storage billing after cluster deletion.',
+      actionCommand: 'gcloud compute disks delete gcp-unattached-ssd-persistent-disk --zone=us-central1-c --quiet',
+      status: 'PENDING'
+    },
+
+    // Azure Recommendations
+    {
+      id: 'rec-015',
+      title: 'Rightsize Azure VM (Standard_D8s_v5 → Standard_D4s_v5)',
+      provider: 'AZURE',
+      service: 'AZURE_VM',
+      resourceId: '/subscriptions/sub-1/resourceGroups/rg-prod/providers/Microsoft.Compute/virtualMachines/vm-app-d8s-v5',
+      currentMonthlyCost: 412.00,
+      projectedMonthlyCost: 124.00,
+      estimatedMonthlySavings: 288.00,
+      impact: 'HIGH',
+      difficulty: 'ONE_CLICK',
+      description: 'VM utilized at 11% CPU over 30 days. Downsizing to D4s v5 saves $288.00/month.',
+      actionCommand: 'az vm update --resource-group rg-prod --name vm-app-d8s-v5 --size Standard_D4s_v5',
+      status: 'PENDING'
+    },
+    {
+      id: 'rec-016',
+      title: 'Pause or Scale Down Idle Azure SQL Database (4 vCore)',
+      provider: 'AZURE',
+      service: 'AZURE_SQL',
+      resourceId: '/subscriptions/sub-1/resourceGroups/rg-data/providers/Microsoft.Sql/servers/sql-staging/databases/db-test',
+      currentMonthlyCost: 365.00,
+      projectedMonthlyCost: 0.00,
+      estimatedMonthlySavings: 365.00,
+      impact: 'CRITICAL',
+      difficulty: 'ONE_CLICK',
+      description: 'Zero incoming requests on test database. Switching to Serverless Auto-Pause saves $365.00/month.',
+      actionCommand: 'az sql db update --resource-group rg-data --server sql-staging --name db-test --edition GeneralPurpose --family Gen5 --capacity 1 --compute-model Serverless --auto-pause-delay 60',
+      status: 'PENDING'
+    },
+    {
+      id: 'rec-017',
+      title: 'Delete Unattached 1TB Azure Premium SSD Managed Disk',
+      provider: 'AZURE',
+      service: 'AZURE_MANAGED_DISK',
+      resourceId: '/subscriptions/sub-1/resourceGroups/rg-infra/providers/Microsoft.Compute/disks/disk-unattached-p30',
+      currentMonthlyCost: 135.00,
+      projectedMonthlyCost: 0.00,
+      estimatedMonthlySavings: 135.00,
+      impact: 'HIGH',
+      difficulty: 'ONE_CLICK',
+      description: 'P30 Premium SSD disk has been unattached for 28 days following VM cleanup.',
+      actionCommand: 'az disk delete --resource-group rg-infra --name disk-unattached-p30 --yes',
+      status: 'PENDING'
     }
   ];
 
   private anomalies: CostAnomaly[] = [
     {
       id: 'anom-01',
+      provider: 'AWS',
       service: 'NAT_GATEWAY',
       date: new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0],
       expectedSpendUSD: 14.20,
@@ -195,6 +510,18 @@ export class FinOpsEngine {
     },
     {
       id: 'anom-02',
+      provider: 'OCI',
+      service: 'OCI_BOOT_VOLUME',
+      date: new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0],
+      expectedSpendUSD: 24.00,
+      actualSpendUSD: 168.00,
+      percentageSpike: 600,
+      rootCause: 'Terraform script applied 120 VPU Ultra Performance to dev compute boot volume instead of Balanced 10 VPU.',
+      severity: 'HIGH'
+    },
+    {
+      id: 'anom-03',
+      provider: 'AWS',
       service: 'LAMBDA',
       date: new Date(Date.now() - 5 * 86400000).toISOString().split('T')[0],
       expectedSpendUSD: 8.50,
@@ -204,74 +531,122 @@ export class FinOpsEngine {
       severity: 'HIGH'
     },
     {
-      id: 'anom-03',
-      service: 'EC2',
+      id: 'anom-04',
+      provider: 'GCP',
+      service: 'GCP_CLOUD_NAT',
+      date: new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0],
+      expectedSpendUSD: 12.00,
+      actualSpendUSD: 110.00,
+      percentageSpike: 816,
+      rootCause: 'Cross-region BigQuery export piped raw dataset through external Cloud NAT IP.',
+      severity: 'CRITICAL'
+    },
+    {
+      id: 'anom-05',
+      provider: 'AZURE',
+      service: 'AZURE_BLOB_STORAGE',
       date: new Date(Date.now() - 9 * 86400000).toISOString().split('T')[0],
-      expectedSpendUSD: 125.00,
-      actualSpendUSD: 240.00,
-      percentageSpike: 92,
-      rootCause: 'Developer ran un-throttled batch ML job on On-Demand g4dn.2xlarge without Spot instance pricing.',
+      expectedSpendUSD: 35.00,
+      actualSpendUSD: 195.00,
+      percentageSpike: 457,
+      rootCause: 'Application diagnostic logging set to Verbose level without retention lifecycle policy.',
       severity: 'MEDIUM'
     }
   ];
 
-  public getSummary(): FinOpsOverviewSummary {
-    const totalMonthlySpendUSD = 4250.00;
-    const pendingRecs = this.recommendations.filter(r => r.status === 'PENDING');
-    const remediatedRecs = this.recommendations.filter(r => r.status === 'REMEDIATED');
+  public getSummary(provider: CloudProvider = 'ALL'): FinOpsOverviewSummary {
+    const filterProvider = (p: 'AWS' | 'OCI' | 'GCP' | 'AZURE') => provider === 'ALL' || provider === p;
 
+    const filteredResources = this.resources.filter(r => filterProvider(r.provider));
+    const filteredRecs = this.recommendations.filter(r => filterProvider(r.provider));
+
+    const pendingRecs = filteredRecs.filter(r => r.status === 'PENDING');
+    const remediatedRecs = filteredRecs.filter(r => r.status === 'REMEDIATED');
+
+    const totalMonthlySpendUSD = filteredResources.reduce((acc, r) => acc + r.monthlyCostUSD, 0);
     const totalIdentifiedWasteUSD = pendingRecs.reduce((acc, r) => acc + r.estimatedMonthlySavings, 0);
     const remediatedSavingsUSD = remediatedRecs.reduce((acc, r) => acc + r.estimatedMonthlySavings, 0);
     const potentialAnnualSavingsUSD = (totalIdentifiedWasteUSD + remediatedSavingsUSD) * 12;
-    const savingsPercentage = Math.round((totalIdentifiedWasteUSD / totalMonthlySpendUSD) * 100);
-    const efficiencyScore = Math.max(0, Math.min(100, Math.round(100 - (totalIdentifiedWasteUSD / totalMonthlySpendUSD) * 100)));
+
+    const savingsPercentage = totalMonthlySpendUSD > 0
+      ? Math.round((totalIdentifiedWasteUSD / totalMonthlySpendUSD) * 100)
+      : 0;
+    const efficiencyScore = totalMonthlySpendUSD > 0
+      ? Math.max(0, Math.min(100, Math.round(100 - (totalIdentifiedWasteUSD / totalMonthlySpendUSD) * 100)))
+      : 100;
+
+    // Helper for provider breakdown
+    const getProviderSummary = (p: 'AWS' | 'OCI' | 'GCP' | 'AZURE'): ProviderSpendSummary => {
+      const pResources = this.resources.filter(r => r.provider === p);
+      const pRecs = this.recommendations.filter(r => r.provider === p && r.status === 'PENDING');
+      const spend = pResources.reduce((acc, r) => acc + r.monthlyCostUSD, 0);
+      const waste = pRecs.reduce((acc, r) => acc + r.estimatedMonthlySavings, 0);
+      const score = spend > 0 ? Math.max(0, Math.min(100, Math.round(100 - (waste / spend) * 100))) : 100;
+      return {
+        spendUSD: Number(spend.toFixed(2)),
+        wasteUSD: Number(waste.toFixed(2)),
+        resourcesCount: pResources.length,
+        recommendationsCount: pRecs.length,
+        efficiencyScore: score
+      };
+    };
 
     return {
-      totalMonthlySpendUSD,
-      totalIdentifiedWasteUSD,
-      potentialAnnualSavingsUSD,
+      totalMonthlySpendUSD: Number(totalMonthlySpendUSD.toFixed(2)),
+      totalIdentifiedWasteUSD: Number(totalIdentifiedWasteUSD.toFixed(2)),
+      potentialAnnualSavingsUSD: Number(potentialAnnualSavingsUSD.toFixed(2)),
       savingsPercentage,
       efficiencyScore,
-      totalResourcesScanned: this.resources.length,
+      totalResourcesScanned: filteredResources.length,
       activeRecommendationsCount: pendingRecs.length,
       resolvedRecommendationsCount: remediatedRecs.length,
-      remediatedSavingsUSD
+      remediatedSavingsUSD: Number(remediatedSavingsUSD.toFixed(2)),
+      providerBreakdown: {
+        AWS: getProviderSummary('AWS'),
+        OCI: getProviderSummary('OCI'),
+        GCP: getProviderSummary('GCP'),
+        AZURE: getProviderSummary('AZURE')
+      }
     };
   }
 
-  public getDailySpendTrajectory(): DailySpendPoint[] {
+  public getDailySpendTrajectory(provider: CloudProvider = 'ALL'): DailySpendPoint[] {
+    const summary = this.getSummary(provider);
     const points: DailySpendPoint[] = [];
-    const baseDailySpend = 141.66; // $4,250 / 30
-    const optimizedDailySpend = 79.33; // $2,380 / 30
+    const baseDailySpend = summary.totalMonthlySpendUSD / 30;
+    const optimizedDailySpend = (summary.totalMonthlySpendUSD - summary.totalIdentifiedWasteUSD) / 30;
 
     for (let i = 29; i >= 0; i--) {
       const d = new Date(Date.now() - i * 86400000);
       const dateStr = d.toISOString().split('T')[0];
-      const variance = (Math.sin(i / 3) * 12) + (Math.random() * 8);
+      const variance = (Math.sin(i / 3) * (baseDailySpend * 0.1)) + (Math.random() * (baseDailySpend * 0.05));
       const actual = Number((baseDailySpend + variance).toFixed(2));
-      const optimized = Number((optimizedDailySpend + variance * 0.4).toFixed(2));
+      const optimized = Number((optimizedDailySpend + variance * 0.35).toFixed(2));
 
       points.push({
         date: dateStr,
         actualSpendUSD: actual,
         optimizedSpendUSD: optimized,
-        wasteUSD: Number((actual - optimized).toFixed(2))
+        wasteUSD: Number(Math.max(0, actual - optimized).toFixed(2))
       });
     }
 
     return points;
   }
 
-  public getRecommendations(): FinOpsRecommendation[] {
-    return this.recommendations;
+  public getRecommendations(provider: CloudProvider = 'ALL'): FinOpsRecommendation[] {
+    if (provider === 'ALL') return this.recommendations;
+    return this.recommendations.filter(r => r.provider === provider);
   }
 
-  public getResources(): CostResource[] {
-    return this.resources;
+  public getResources(provider: CloudProvider = 'ALL'): CostResource[] {
+    if (provider === 'ALL') return this.resources;
+    return this.resources.filter(r => r.provider === provider);
   }
 
-  public getAnomalies(): CostAnomaly[] {
-    return this.anomalies;
+  public getAnomalies(provider: CloudProvider = 'ALL'): CostAnomaly[] {
+    if (provider === 'ALL') return this.anomalies;
+    return this.anomalies.filter(r => r.provider === provider);
   }
 
   public remediate(id: string): FinOpsRecommendation | null {
@@ -289,3 +664,5 @@ export class FinOpsEngine {
     });
   }
 }
+
+export const finopsEngine = new FinOpsEngine();

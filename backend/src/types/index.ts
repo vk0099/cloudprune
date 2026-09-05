@@ -1,4 +1,11 @@
+export type CloudProvider = 'ALL' | 'AWS' | 'OCI' | 'GCP' | 'AZURE';
+
 export type AWSService = 'EC2' | 'RDS' | 'EBS' | 'S3' | 'NAT_GATEWAY' | 'ELASTIC_IP' | 'LAMBDA';
+export type OCIService = 'OCI_COMPUTE' | 'OCI_BLOCK_STORAGE' | 'OCI_AUTONOMOUS_DB' | 'OCI_OBJECT_STORAGE' | 'OCI_VCN_NAT' | 'OCI_BOOT_VOLUME';
+export type GCPService = 'GCP_COMPUTE' | 'GCP_CLOUD_SQL' | 'GCP_PERSISTENT_DISK' | 'GCP_CLOUD_STORAGE' | 'GCP_CLOUD_NAT';
+export type AzureService = 'AZURE_VM' | 'AZURE_SQL' | 'AZURE_MANAGED_DISK' | 'AZURE_BLOB_STORAGE' | 'AZURE_NAT_GATEWAY';
+
+export type CloudService = AWSService | OCIService | GCPService | AzureService;
 
 export type ImpactLevel = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
@@ -7,7 +14,8 @@ export type ActionStatus = 'PENDING' | 'REMEDIATED' | 'IGNORED';
 export interface CostResource {
   id: string;
   name: string;
-  service: AWSService;
+  provider: 'AWS' | 'OCI' | 'GCP' | 'AZURE';
+  service: CloudService;
   region: string;
   monthlyCostUSD: number;
   wastedCostUSD: number;
@@ -19,7 +27,8 @@ export interface CostResource {
 export interface FinOpsRecommendation {
   id: string;
   title: string;
-  service: AWSService;
+  provider: 'AWS' | 'OCI' | 'GCP' | 'AZURE';
+  service: CloudService;
   resourceId: string;
   currentMonthlyCost: number;
   projectedMonthlyCost: number;
@@ -34,7 +43,8 @@ export interface FinOpsRecommendation {
 
 export interface CostAnomaly {
   id: string;
-  service: AWSService;
+  provider: 'AWS' | 'OCI' | 'GCP' | 'AZURE';
+  service: CloudService;
   date: string;
   expectedSpendUSD: number;
   actualSpendUSD: number;
@@ -50,6 +60,14 @@ export interface DailySpendPoint {
   wasteUSD: number;
 }
 
+export interface ProviderSpendSummary {
+  spendUSD: number;
+  wasteUSD: number;
+  resourcesCount: number;
+  recommendationsCount: number;
+  efficiencyScore: number;
+}
+
 export interface FinOpsOverviewSummary {
   totalMonthlySpendUSD: number;
   totalIdentifiedWasteUSD: number;
@@ -60,4 +78,10 @@ export interface FinOpsOverviewSummary {
   activeRecommendationsCount: number;
   resolvedRecommendationsCount: number;
   remediatedSavingsUSD: number;
+  providerBreakdown: {
+    AWS: ProviderSpendSummary;
+    OCI: ProviderSpendSummary;
+    GCP: ProviderSpendSummary;
+    AZURE: ProviderSpendSummary;
+  };
 }

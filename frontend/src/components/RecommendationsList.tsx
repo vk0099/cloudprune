@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
-import { FinOpsRecommendation } from '../types';
+import { FinOpsRecommendation, CloudProvider } from '../types';
 import {
   Zap,
   CheckCircle2,
-  Terminal,
   Copy,
   Check,
-  Clock,
-  AlertTriangle,
   ArrowRight,
   Server,
   Database,
@@ -34,13 +31,53 @@ export const RecommendationsList: React.FC<RecommendationsListProps> = ({
   };
 
   const getServiceIcon = (service: string) => {
-    switch (service) {
-      case 'EC2': return <Server className="w-4 h-4 text-indigo-400" />;
-      case 'RDS': return <Database className="w-4 h-4 text-sky-400" />;
-      case 'EBS': return <HardDrive className="w-4 h-4 text-amber-400" />;
-      case 'S3': return <Cloud className="w-4 h-4 text-emerald-400" />;
-      case 'NAT_GATEWAY': return <Network className="w-4 h-4 text-rose-400" />;
-      default: return <Zap className="w-4 h-4 text-purple-400" />;
+    if (service.includes('DB') || service.includes('RDS') || service.includes('SQL')) {
+      return <Database className="w-4 h-4 text-sky-400" />;
+    }
+    if (service.includes('STORAGE') || service.includes('EBS') || service.includes('DISK') || service.includes('VOLUME') || service.includes('S3')) {
+      return <HardDrive className="w-4 h-4 text-amber-400" />;
+    }
+    if (service.includes('NAT') || service.includes('VCN') || service.includes('IP') || service.includes('NETWORK')) {
+      return <Network className="w-4 h-4 text-rose-400" />;
+    }
+    return <Server className="w-4 h-4 text-indigo-400" />;
+  };
+
+  const getProviderBadge = (provider: 'AWS' | 'OCI' | 'GCP' | 'AZURE') => {
+    switch (provider) {
+      case 'OCI':
+        return (
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">
+            ORACLE OCI
+          </span>
+        );
+      case 'AWS':
+        return (
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+            AMAZON AWS
+          </span>
+        );
+      case 'GCP':
+        return (
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-sky-500/10 text-sky-400 border border-sky-500/30">
+            GOOGLE GCP
+          </span>
+        );
+      case 'AZURE':
+        return (
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">
+            MS AZURE
+          </span>
+        );
+    }
+  };
+
+  const getCliName = (provider: 'AWS' | 'OCI' | 'GCP' | 'AZURE') => {
+    switch (provider) {
+      case 'OCI': return 'OCI CLI';
+      case 'AWS': return 'AWS CLI';
+      case 'GCP': return 'gcloud CLI';
+      case 'AZURE': return 'Azure CLI';
     }
   };
 
@@ -50,10 +87,10 @@ export const RecommendationsList: React.FC<RecommendationsListProps> = ({
         <div>
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <Zap className="w-4 h-4 text-amber-400" />
-            <span>Actionable FinOps Recommendations</span>
+            <span>Multi-Cloud Actionable FinOps Recommendations</span>
           </h3>
           <p className="text-xs text-slate-400 mt-0.5">
-            One-click automated remediations and AWS CLI command recipes.
+            Automated one-click remediations and verified CLI command recipes across OCI, AWS, GCP, and Azure.
           </p>
         </div>
         <div className="text-xs font-mono text-slate-400">
@@ -79,6 +116,7 @@ export const RecommendationsList: React.FC<RecommendationsListProps> = ({
                 {/* Left: Metadata & Description */}
                 <div className="space-y-1.5 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
+                    {getProviderBadge(rec.provider)}
                     <span className="p-1 rounded-lg bg-dark-900 border border-slate-800">
                       {getServiceIcon(rec.service)}
                     </span>
@@ -114,10 +152,11 @@ export const RecommendationsList: React.FC<RecommendationsListProps> = ({
                     </div>
                     <button
                       onClick={() => copyCommand(rec.id, rec.actionCommand)}
-                      title="Copy AWS CLI Command"
-                      className="p-1.5 rounded-lg bg-dark-900 hover:bg-dark-800 border border-slate-800 text-slate-400 hover:text-white transition-colors"
+                      title={`Copy ${getCliName(rec.provider)} Command`}
+                      className="p-1.5 rounded-lg bg-dark-900 hover:bg-dark-800 border border-slate-800 text-slate-400 hover:text-white transition-colors flex items-center gap-1 text-[10px] font-mono"
                     >
                       {copiedId === rec.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span className="hidden sm:inline">{getCliName(rec.provider)}</span>
                     </button>
                   </div>
                 </div>

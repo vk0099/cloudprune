@@ -1,12 +1,41 @@
 import React from 'react';
 import { CostAnomaly } from '../types';
-import { AlertOctagon, TrendingUp, Calendar, Info } from 'lucide-react';
+import { AlertOctagon, Calendar } from 'lucide-react';
 
 interface AnomaliesFeedProps {
   anomalies: CostAnomaly[];
 }
 
 export const AnomaliesFeed: React.FC<AnomaliesFeedProps> = ({ anomalies }) => {
+  const getProviderBadge = (provider: 'AWS' | 'OCI' | 'GCP' | 'AZURE') => {
+    switch (provider) {
+      case 'OCI':
+        return (
+          <span className="px-1.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[9px] font-mono font-bold">
+            OCI
+          </span>
+        );
+      case 'AWS':
+        return (
+          <span className="px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[9px] font-mono font-bold">
+            AWS
+          </span>
+        );
+      case 'GCP':
+        return (
+          <span className="px-1.5 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-[9px] font-mono font-bold">
+            GCP
+          </span>
+        );
+      case 'AZURE':
+        return (
+          <span className="px-1.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[9px] font-mono font-bold">
+            AZURE
+          </span>
+        );
+    }
+  };
+
   return (
     <div className="p-6 rounded-3xl bg-dark-900 border border-slate-800/80 shadow-xl space-y-4">
       <div>
@@ -15,7 +44,7 @@ export const AnomaliesFeed: React.FC<AnomaliesFeedProps> = ({ anomalies }) => {
           <span>Cost Anomaly Spikes Detected</span>
         </h3>
         <p className="text-xs text-slate-400 mt-0.5">
-          Automated root-cause analysis on anomalous CloudWatch billing events.
+          Automated root-cause analysis on multi-cloud billing spike alerts.
         </p>
       </div>
 
@@ -27,6 +56,7 @@ export const AnomaliesFeed: React.FC<AnomaliesFeedProps> = ({ anomalies }) => {
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
+                {getProviderBadge(anom.provider)}
                 <span className="px-2 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[10px] font-mono font-bold">
                   +{anom.percentageSpike}% SPIKE
                 </span>

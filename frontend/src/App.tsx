@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Navbar } from './components/Navbar';
 import { FinOpsOverview } from './components/FinOpsOverview';
 import { CostTrajectoryChart } from './components/CostTrajectoryChart';
@@ -6,21 +6,29 @@ import { RecommendationsList } from './components/RecommendationsList';
 import { AnomaliesFeed } from './components/AnomaliesFeed';
 import { ResourcesTable } from './components/ResourcesTable';
 import { SavingsSimulatorModal } from './components/SavingsSimulatorModal';
-import { FinOpsOverviewSummary, DailySpendPoint, FinOpsRecommendation, CostAnomaly, CostResource } from './types';
-import { Sparkles, Terminal, Shield, RefreshCw } from 'lucide-react';
+import {
+  FinOpsOverviewSummary,
+  DailySpendPoint,
+  FinOpsRecommendation,
+  CostAnomaly,
+  CostResource,
+  CloudProvider
+} from './types';
+import { Sparkles, Shield, Layers, Server } from 'lucide-react';
 
 export const App: React.FC = () => {
+  const [selectedProvider, setSelectedProvider] = useState<CloudProvider>('ALL');
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [summary, setSummary] = useState<FinOpsOverviewSummary>({
-    totalMonthlySpendUSD: 4250.00,
-    totalIdentifiedWasteUSD: 1870.00,
-    potentialAnnualSavingsUSD: 22440.00,
-    savingsPercentage: 44,
-    efficiencyScore: 56,
-    totalResourcesScanned: 7,
-    activeRecommendationsCount: 7,
+    totalMonthlySpendUSD: 7420.00,
+    totalIdentifiedWasteUSD: 3120.00,
+    potentialAnnualSavingsUSD: 37440.00,
+    savingsPercentage: 42,
+    efficiencyScore: 58,
+    totalResourcesScanned: 13,
+    activeRecommendationsCount: 13,
     resolvedRecommendationsCount: 0,
     remediatedSavingsUSD: 0
   });
@@ -37,16 +45,18 @@ export const App: React.FC = () => {
     return '/api';
   };
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async (provider: CloudProvider) => {
     try {
       setLoading(true);
       const apiBase = getApiBase();
+      const q = provider === 'ALL' ? '' : `?provider=${provider}`;
+
       const [sumRes, trajRes, recRes, resRes, anomRes] = await Promise.all([
-        fetch(`${apiBase}/overview`).then(r => r.json()).catch(() => null),
-        fetch(`${apiBase}/spend-trajectory`).then(r => r.json()).catch(() => null),
-        fetch(`${apiBase}/recommendations`).then(r => r.json()).catch(() => null),
-        fetch(`${apiBase}/resources`).then(r => r.json()).catch(() => null),
-        fetch(`${apiBase}/anomalies`).then(r => r.json()).catch(() => null),
+        fetch(`${apiBase}/overview${q}`).then(r => r.json()).catch(() => null),
+        fetch(`${apiBase}/spend-trajectory${q}`).then(r => r.json()).catch(() => null),
+        fetch(`${apiBase}/recommendations${q}`).then(r => r.json()).catch(() => null),
+        fetch(`${apiBase}/resources${q}`).then(r => r.json()).catch(() => null),
+        fetch(`${apiBase}/anomalies${q}`).then(r => r.json()).catch(() => null),
       ]);
 
       if (sumRes?.data) setSummary(sumRes.data);
@@ -59,16 +69,17 @@ export const App: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    fetchData(selectedProvider);
+  }, [selectedProvider, fetchData]);
 
   const handleRemediate = async (id: string) => {
     try {
       const apiBase = getApiBase();
-      const res = await fetch(`${apiBase}/remediate/${id}`, { method: 'POST' });
+      const q = selectedProvider === 'ALL' ? '' : `?provider=${selectedProvider}`;
+      const res = await fetch(`${apiBase}/remediate/${id}${q}`, { method: 'POST' });
       const data = await res.json();
       if (data.success) {
         setRecommendations(prev =>
@@ -79,7 +90,7 @@ export const App: React.FC = () => {
         }
       }
     } catch (err) {
-      // Local fallback in case offline
+      // Local fallback
       setRecommendations(prev =>
         prev.map(r => r.id === id ? { ...r, status: 'REMEDIATED', remediatedAt: new Date().toISOString() } : r)
       );
@@ -93,7 +104,7 @@ export const App: React.FC = () => {
           remediatedSavingsUSD: prev.remediatedSavingsUSD + savings,
           resolvedRecommendationsCount: prev.resolvedRecommendationsCount + 1,
           activeRecommendationsCount: Math.max(0, prev.activeRecommendationsCount - 1),
-          efficiencyScore: Math.min(100, prev.efficiencyScore + 7)
+          efficiencyScore: Math.min(100, prev.efficiencyScore + 5)
         };
       });
     }
@@ -102,17 +113,28 @@ export const App: React.FC = () => {
   const handleReset = async () => {
     try {
       const apiBase = getApiBase();
-      await fetch(`${apiBase}/reset`, { method: 'POST' });
-      fetchData();
+      const q = selectedProvider === 'ALL' ? '' : `?provider=${selectedProvider}`;
+      await fetch(`${apiBase}/reset${q}`, { method: 'POST' });
+      fetchData(selectedProvider);
     } catch {
-      fetchData();
+      fetchData(selectedProvider);
     }
   };
+
+  const providerFilters: { key: CloudProvider; label: string; badge?: string }[] = [
+    { key: 'ALL', label: 'All Clouds (Consolidated)' },
+    { key: 'OCI', label: 'Oracle Cloud (OCI)', badge: 'Live Tenancy' },
+    { key: 'AWS', label: 'Amazon AWS' },
+    { key: 'GCP', label: 'Google Cloud (GCP)' },
+    { key: 'AZURE', label: 'Microsoft Azure' }
+  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-dark-950 text-slate-100 font-sans">
       <Navbar
         efficiencyScore={summary.efficiencyScore}
+        selectedProvider={selectedProvider}
+        onSelectProvider={setSelectedProvider}
         onOpenSimulator={() => setSimulatorOpen(true)}
         onReset={handleReset}
       />
@@ -120,20 +142,33 @@ export const App: React.FC = () => {
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 w-full">
 
         {/* Top Header Banner */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-gradient-to-r from-dark-900 via-dark-850 to-dark-900 border border-slate-800">
-          <div className="space-y-1">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-gradient-to-r from-dark-900 via-dark-850 to-dark-900 border border-slate-800 shadow-xl">
+          <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold flex items-center gap-1.5">
                 <Shield className="w-3.5 h-3.5" />
-                AUTOMATED FINOPS AUDIT
+                MULTI-CLOUD FINOPS GOVERNANCE
               </span>
-              <span className="text-xs text-slate-400 font-mono">Scan completed 3m ago</span>
+              <span className="text-xs text-slate-400 font-mono">Real-time scan active</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              AWS Cloud Cost Intelligence & Waste Pruning
+              {selectedProvider === 'ALL' && 'Multi-Cloud Cost Intelligence & Autonomous Waste Pruning'}
+              {selectedProvider === 'OCI' && 'Oracle Cloud (OCI) FinOps & Flex Shape Rightsizing'}
+              {selectedProvider === 'AWS' && 'AWS Cost Governance & Resource Optimization'}
+              {selectedProvider === 'GCP' && 'Google Cloud (GCP) Machine & Disk Waste Pruner'}
+              {selectedProvider === 'AZURE' && 'Microsoft Azure Cloud Cost Intelligence'}
             </h1>
             <p className="text-xs text-slate-400 max-w-2xl">
-              Real-time heuristic analysis identifies idle infrastructure, oversized instances, orphaned storage, and rogue data egress before your month-end AWS bill spikes.
+              {selectedProvider === 'ALL' &&
+                'Autonomous heuristic analysis across Oracle Cloud (OCI), AWS, GCP, and Azure. Identifies oversized shapes, idle databases, dangling disks, and unoptimized storage tiering.'}
+              {selectedProvider === 'OCI' &&
+                'Fine-tune OCPU & RAM allocations on VM.Standard.A1/E4 Flex shapes, reduce Block Volume VPUs from 120 to 10, auto-stop idle Autonomous DBs, and enforce Always Free tier quotas.'}
+              {selectedProvider === 'AWS' &&
+                'Prune idle staging RDS instances, downsize oversized EC2 compute, migrate GP2 to GP3 EBS volumes, and transition S3 buckets to Glacier Instant Retrieval.'}
+              {selectedProvider === 'GCP' &&
+                'Rightsize Custom N2 compute to cost-effective E2 shapes, schedule Cloud SQL off-peak sleep, and purge orphaned Persistent SSD disks.'}
+              {selectedProvider === 'AZURE' &&
+                'Downsize oversized Standard D-series VMs, activate Serverless SQL auto-pause, and eliminate unattached P30 Premium SSD managed disks.'}
             </p>
           </div>
 
@@ -148,8 +183,44 @@ export const App: React.FC = () => {
           </div>
         </div>
 
-        {/* High-Level FinOps Metric Cards */}
-        <FinOpsOverview summary={summary} />
+        {/* Multi-Cloud Provider Filter Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-800/80">
+          <span className="text-xs text-slate-400 font-mono mr-1 hidden sm:inline flex items-center gap-1">
+            <Layers className="w-3.5 h-3.5" /> Scope:
+          </span>
+          {providerFilters.map((p) => {
+            const isSelected = selectedProvider === p.key;
+            return (
+              <button
+                key={p.key}
+                onClick={() => setSelectedProvider(p.key)}
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                  isSelected
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                    : 'bg-dark-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                }`}
+              >
+                <span>{p.label}</span>
+                {p.badge && (
+                  <span
+                    className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full ${
+                      isSelected ? 'bg-emerald-800 text-emerald-100' : 'bg-rose-500/20 text-rose-300'
+                    }`}
+                  >
+                    {p.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* High-Level FinOps Metric Cards & Provider Breakdown */}
+        <FinOpsOverview
+          summary={summary}
+          selectedProvider={selectedProvider}
+          onSelectProvider={setSelectedProvider}
+        />
 
         {/* Cost Spend vs Trajectory Chart */}
         {trajectory.length > 0 && <CostTrajectoryChart data={trajectory} />}
@@ -177,11 +248,15 @@ export const App: React.FC = () => {
         isOpen={simulatorOpen}
         onClose={() => setSimulatorOpen(false)}
         baseSpend={summary.totalMonthlySpendUSD}
+        selectedProvider={selectedProvider}
       />
 
       {/* Footer */}
       <footer className="border-t border-slate-800/80 bg-dark-950 py-8 text-center text-xs text-slate-500 font-mono">
-        CloudPrune FinOps Engine · Engineered with React 18, TypeScript, Tailwind CSS & Recharts · Multi-Cloud Cost Optimization
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <span>CloudPrune Multi-Cloud FinOps Engine · VanceK Platform</span>
+          <span className="text-slate-400">Oracle Cloud (OCI) · Amazon AWS · Google Cloud (GCP) · Microsoft Azure</span>
+        </div>
       </footer>
     </div>
   );
