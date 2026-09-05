@@ -342,16 +342,16 @@ export class FinOpsEngine {
     // OCI Recommendations
     {
       id: 'rec-008',
-      title: 'Rightsize OCI Ampere A1 Flex Shape (8 OCPUs/48GB → 4 OCPUs/24GB)',
+      title: 'Rightsize OCI Ampere A1 Flex Shape to Always Free Quota (8 OCPUs/48GB → 4 OCPUs/24GB)',
       provider: 'OCI',
       service: 'OCI_COMPUTE',
       resourceId: 'ocid1.instance.oc1.iad.abuwcljtsq...',
       currentMonthlyCost: 345.60,
-      projectedMonthlyCost: 105.60,
-      estimatedMonthlySavings: 240.00,
+      projectedMonthlyCost: 0.00,
+      estimatedMonthlySavings: 345.60,
       impact: 'HIGH',
       difficulty: 'ONE_CLICK',
-      description: 'Ampere A1 Flex instance is overprovisioned. Downsizing to 4 OCPUs / 24 GB RAM fits within Always-Free / baseline tier.',
+      description: 'Ampere A1 Flex instance is overprovisioned. Downsizing to 4 OCPUs / 24 GB RAM brings usage within the 3,000 OCPU-hours/mo Always Free allowance ($0.00/mo).',
       actionCommand: 'oci compute instance update --instance-id ocid1.instance.oc1.iad.abuwcljtsq... --shape-config "{\\"ocpus\\":4,\\"memoryInGBs\\":24}"',
       status: 'PENDING'
     },

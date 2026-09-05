@@ -6,6 +6,7 @@ import { RecommendationsList } from './components/RecommendationsList';
 import { AnomaliesFeed } from './components/AnomaliesFeed';
 import { ResourcesTable } from './components/ResourcesTable';
 import { SavingsSimulatorModal } from './components/SavingsSimulatorModal';
+import { OciAlwaysFreeCard } from './components/OciAlwaysFreeCard';
 import {
   FinOpsOverviewSummary,
   DailySpendPoint,
@@ -221,6 +222,11 @@ export const App: React.FC = () => {
           selectedProvider={selectedProvider}
           onSelectProvider={setSelectedProvider}
         />
+
+        {/* Oracle Cloud Always Free Allowance & Guardrail (Visible on ALL and OCI) */}
+        {(selectedProvider === 'ALL' || selectedProvider === 'OCI') && (
+          <OciAlwaysFreeCard currentOcpus={2} currentRamGb={12} currentStorageGb={200} />
+        )}
 
         {/* Cost Spend vs Trajectory Chart */}
         {trajectory.length > 0 && <CostTrajectoryChart data={trajectory} />}
